@@ -54,7 +54,7 @@ MODE_GENERATION_PARAMS = {
 
 PROMPT_CONFIG = {
     "system_prompt_interval": 5,      # Каждое N-ое сообщение
-    "enable_periodic_prompt": False,  # Включить периодичность
+    "enable_periodic_prompt": True,  # Включить периодичность
     "prompt_strategy": "periodic",    # always, periodic, adaptive
     "min_prompt_tokens": 64,          # Минимум токенов для кэша DeepSeek
     
@@ -65,6 +65,10 @@ PROMPT_CONFIG = {
     # Пороги для адаптивной стратегии
     "cache_hit_threshold": 0.7,       # Мин. cache hit rate
     "adaptive_check_interval": 20,    # Проверять каждые N сообщений
+    
+    # Логирование промптов
+    "log_prompt_usage": True,         # Логировать использование промптов
+    "log_prompt_preview_length": 100, # Длина превью промпта в логах
 }
 
 
@@ -239,6 +243,14 @@ PROMPTS = {
 """.strip()
     }
 }
+
+
+
+# ========================================
+# JSON-ЗАГЛУШКА ДЛЯ ПЕРИОДИЧЕСКИХ ПРОМПТОВ
+# ========================================
+
+JSON_STUB_PROMPT = "Ты — Химера, гениальная девушка. Ответь только в формате json: {\"response\": \"ответ с естественными абзацами (\\n\\n)\"}"
 
 
 
