@@ -4,7 +4,7 @@ from datetime import datetime
 from actors.base_actor import BaseActor
 from actors.messages import ActorMessage, MESSAGE_TYPES
 from actors.events import BaseEvent
-from config.prompts import PROMPTS, PROMPT_CONFIG, JSON_SCHEMA_INSTRUCTIONS, MODE_GENERATION_PARAMS, GENERATION_PARAMS_LOG_CONFIG
+from config.prompts import PROMPTS, PROMPT_CONFIG, JSON_SCHEMA_INSTRUCTIONS, MODE_GENERATION_PARAMS, GENERATION_PARAMS_LOG_CONFIG, JSON_STUB_PROMPT
 from config.settings import (
     DEEPSEEK_API_KEY,
     DEEPSEEK_BASE_URL,
@@ -273,9 +273,11 @@ class GenerationActor(BaseActor):
         """Форматирование контекста для API"""
         messages = []
         
+        # Определяем use_json ДО условий
+        use_json = PROMPT_CONFIG["use_json_mode"] and not force_normal
+        
         # Системный промпт (если нужен)
         if include_prompt:
-            use_json = PROMPT_CONFIG["use_json_mode"] and not force_normal
             
             # Всегда начинаем с базового промпта
             prompt_key = "json" if use_json else "normal"
@@ -288,6 +290,25 @@ class GenerationActor(BaseActor):
                 "role": "system",
                 "content": system_prompt
             })
+            
+            # Логирование промпта если включено
+            if PROMPT_CONFIG.get("log_prompt_usage", False):
+                prompt_type = f"system + {mode}" if mode != "base" else "system"
+                prompt_preview = system_prompt[:PROMPT_CONFIG.get("log_prompt_preview_length", 100)]
+                json_mode = "JSON" if use_json else "non-JSON"
+                self.logger.info(f'PROMPT: {json_mode} "{prompt_type}" "{prompt_preview}..."')
+        
+        # JSON-заглушка когда полный промпт не включен
+        elif use_json:
+            messages.append({
+                "role": "system",
+                "content": JSON_STUB_PROMPT
+            })
+            
+            # Логирование заглушки если включено
+            if PROMPT_CONFIG.get("log_prompt_usage", False):
+                prompt_preview = JSON_STUB_PROMPT[:PROMPT_CONFIG.get("log_prompt_preview_length", 100)]
+                self.logger.info(f'PROMPT: JSON "stub" "{prompt_preview}..."')
         
         # Добавляем исторический контекст из STM
         if historical_context:
